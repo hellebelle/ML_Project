@@ -28,15 +28,15 @@ def dataset_visualisation() :
         i += 1
     pyplot.show()
 
-#TODO : Check for stationarity of multivariate time series (Statistical Test-Dickie Fuller)
+#TODO : Check for stationarity of multivariate time series (Statistical Test-Dickie Fuller) (Helen)
 #https://www.analyticsvidhya.com/blog/2018/09/multivariate-time-series-guide-forecasting-modeling-python-codes/#:~:text=A%20Multivariate%20time%20series%20has,used%20for%20forecasting%20future%20values.&text=In%20this%20case%2C%20there%20are,considered%20to%20optimally%20predict%20temperature.
 #https://www.analyticsvidhya.com/blog/2018/09/non-stationary-time-series-python/
 
-#TODO : Drop GDP and Consumer Price Index (or whichever we should after checking for stationarity)
+#TODO : Drop GDP and Consumer Price Index (or whichever we should after checking for stationarity) (Helen)
 
-#TODO : Normalise data (0 to 1)
+#TODO : Normalise data (0 to 1) (Cian)
 
-#TODO : 5-fold cross-validation
+#TODO : 5-fold cross-validation (Cian)
 #Refer to : https://medium.com/@soumyachess1496/cross-validation-in-time-series-566ae4981ce4
 
 #TODO : Cross validation for Model 1 (Ridge) to select alpha value
@@ -47,11 +47,11 @@ def dataset_visualisation() :
 
 #TODO : Model 2(VAR) Function
 
-#TODO : Prediction using short term trend (+Compare prediction error between the two models)
+#TODO : Prediction using short term trend (+Compare prediction error between the two models) (Everlyn)
 
-#TODO : Prediction using yearly seasonality
+#TODO : Prediction using yearly seasonality (Everlyn)
 
-#TODO : Prediction using yearly and short term trend combined
+#TODO : Prediction using yearly and short term trend combined (Everlyn)
 
 #TODO : Both model's + baseline model Prediction Error(MSE) + Errorbar Function
 
