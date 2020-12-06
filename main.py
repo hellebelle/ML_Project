@@ -109,13 +109,12 @@ for i in range(2,6):
 #For data[2] we need to try remove trend and seasonality
 def differencing(ts,i):
     #We take the difference of the observation at a particular instant with that at the previous instant.
-    ts_log = np.log(ts)
-    ts_log_diff = ts_log - ts_log.shift()
+    ts_diff = ts - ts.shift(1)
     # plt.plot(ts_log_diff)
-    ts_log_diff.dropna(inplace=True)
-    # test_stationarity(ts_log_diff,i)
+    ts_diff.dropna(inplace=True)
+    test_stationarity((ts_diff),i)
 
-    return ts_log_diff
+    return ts_diff
 
 data[2] = differencing(data[2],2)
 print(data)
