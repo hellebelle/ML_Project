@@ -28,6 +28,13 @@ def dataset_visualisation() :
         i += 1
     pyplot.show()
 
+#Standard in time-series to use variable depicting date-time information as index
+df.iloc[:,0] = d
+#Use 'data' from this point forward
+data = df.drop([0],axis=1)
+data.index = df.iloc[:,0]
+print(data.head())
+
 #TODO : Check for stationarity of multivariate time series (Statistical Test-Dickie Fuller) (Helen)
 #https://www.analyticsvidhya.com/blog/2018/09/multivariate-time-series-guide-forecasting-modeling-python-codes/#:~:text=A%20Multivariate%20time%20series%20has,used%20for%20forecasting%20future%20values.&text=In%20this%20case%2C%20there%20are,considered%20to%20optimally%20predict%20temperature.
 #https://www.analyticsvidhya.com/blog/2018/09/non-stationary-time-series-python/
