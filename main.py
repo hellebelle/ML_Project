@@ -124,9 +124,49 @@ def normalizeDataframe(dataFrame):
     df_num = dataFrame.select_dtypes(include=[np.number])
     df_norm = (df_num- df_num.min()) / (df_num.max() - df_num.min())
     dataFrame[df_norm.columns] = df_norm
-    pass
+    
 
-
+def crossValidationTimeSeries():
+    # All info from here: https://medium.com/@soumyachess1496/cross-validation-in-time-series-566ae4981ce4
+    
+    ####### Method 1 #######
+    
+    # Start with small subset of the data
+    # Forecast for later data points and then check accuracy of the forecasted data points
+    # Use the same forecasted points as part of te next training dataset and forecast subsequent points again.
+    
+    # EXAMPLE: 5 observations  in cross validation set and want 4 fold cross validation
+    # Let dataset be [1,2,3,4,5]
+    # Need to create 4 pairs of training/test sets that follow these two rules
+    # 1. Every test set contains unique observations
+    # 2. Observations from training set occur before their corresponding test set
+    # We get the following pairs of training/test sets:
+    # Training: [1] Test: [2]
+    # Training: [1,2] Test: [3]
+    # Training: [1,2,3] Test: [4]
+    # Training: [1,2,3,4] Test: [5]
+    # Compute average of accuracies of the 4 test fold
+    
+    ######## Sample code for METHOD 1 ########
+    # import numpy as np
+    # from sklearn.model_selection import TimeSeriesSplit
+    # X = np.array([[1, 2], [3, 4], [1, 2], [3, 4], [1, 2], [3, 4]])
+    # y = np.array([1, 2, 3, 4, 5, 6])
+    # tscv = TimeSeriesSplit()
+    # print(tscv)
+    # TimeSeriesSplit(max_train_size=None, n_splits=3)
+    # for train_index, test_index in tscv.split(X):
+    # print(“TRAIN:”, train_index, “TEST:”, test_index) X_train, X_test = X[train_index], X[test_index]
+    # y_train, y_test = y[train_index], y[test_index]
+    
+    # This gives the following output:
+    # TRAIN: [0 1 2] TEST: [3]
+    # TRAIN: [0 1 2 3] TEST: [4]
+    # TRAIN: [0 1 2 3 4] TEST: [5]
+    # Now train several models on each of these and average the accruacies for each model then pick the best one
+	pass
+    
+    
 #TODO : Drop GDP and Consumer Price Index (or whichever we should after checking for stationarity) (Helen)
 
 #TODO : Normalise data (0 to 1) (Cian)
