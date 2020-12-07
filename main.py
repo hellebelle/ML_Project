@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib as pyplot
 from matplotlib import pyplot
 import datetime as dt
+from sklearn.preprocessing import Normalizer
 
 #load dataset
 df = pd.read_csv("./dataset.csv",comment='#',header=None,parse_dates=[0])
@@ -118,6 +119,14 @@ def differencing(ts,i):
 
 data[2] = differencing(data[2],2)
 print(data)
+
+def normalizeDataframe(dataFrame):
+    df_num = dataFrame.select_dtypes(include=[np.number])
+    df_norm = (df_num- df_num.min()) / (df_num.max() - df_num.min())
+    dataFrame[df_norm.columns] = df_norm
+    pass
+
+
 #TODO : Drop GDP and Consumer Price Index (or whichever we should after checking for stationarity) (Helen)
 
 #TODO : Normalise data (0 to 1) (Cian)
@@ -140,7 +149,3 @@ print(data)
 #TODO : Prediction using yearly and short term trend combined (Everlyn)
 
 #TODO : Both model's + baseline model Prediction Error(MSE) + Errorbar Function
-
-
-
-
