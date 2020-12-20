@@ -41,10 +41,25 @@ data.index = d
 # #3. Specify values for a whole year:
 #     data['2005']
 
+from statsmodels.tsa.stattools import grangercausalitytests
+def granger_causality_matrix() :
+    test = 'ssr_chi2test'; maxlag=12; verbose=False 
+    variables = ["Average Housing Price","Mortgage Interest Rates","Consumer Price Index","Yearly GDP Per Capita","Net Yearly Household Income"]
+    matrix = pd.DataFrame(np.zeros((len(variables), len(variables))), columns=variables, index=variables)
+    for c in matrix.columns :
+        for r in matrix.index :
+            test_result = grangercausalitytests(data[[r,c]],maxlag=maxlag,verbose=False)
+            p_values = [round(test_result[i+1][0][test][1],4) for i in range(maxlag)]
+            if verbose: print(f'Y = {r}, X = {c}, P Values = {p_values}')
+            min_p_value = np.min(p_values)
+            matrix.loc[r, c] = min_p_value
+    matrix.columns = [var + '_x' for var in variables]
+    matrix.index = [var + '_y' for var in variables]
+    print(matrix.loc[['Average Housing Price_y']])
+    
 #Check for stationarity of multivariate time series (Statistical Test-Dickie Fuller) (Helen)
 #https://www.analyticsvidhya.com/blog/2018/09/multivariate-time-series-guide-forecasting-modeling-python-codes/#:~:text=A%20Multivariate%20time%20series%20has,used%20for%20forecasting%20future%20values.&text=In%20this%20case%2C%20there%20are,considered%20to%20optimally%20predict%20temperature.
 #https://www.analyticsvidhya.com/blog/2018/09/non-stationary-time-series-python/
-
 from statsmodels.tsa.stattools import adfuller
 def stationarity(timeseries,name):
     #Perform Dickey-Fuller test:
@@ -78,14 +93,12 @@ def diff_stationarity_test() :
     stationarity(data['diffGDP'].dropna(),"Differenced Yearly GDP Per Capita") #Result after first differencing is data remains non-stationary
     stationarity(data['diffYHI'].dropna(),"Differenced Net Yearly Household Income") #Result after first differencing is data remains non-stationary
     
-diff_stationarity_test()
-
 #Second round of differencing
 def second_differencing() :
-    data['Second_diffMIR'] = data['diffMIR']-data['diffMIR'].shift(1)
-    data['Second_diffCPI'] = data['diffCPI']-data['diffCPI'].shift(1)
-    data['Second_diffGDP'] = data['diffGDP']-data['diffGDP'].shift(1)
-    data['Second_diffYHI'] = data['diffYHI']-data['diffYHI'].shift(1)
+    data['Second_diffMIR'] = data['diffMIR']-data['diffMIR'].shift(1) #Result : Stationary
+    data['Second_diffCPI'] = data['diffCPI']-data['diffCPI'].shift(1) #Result : Stationary
+    data['Second_diffGDP'] = data['diffGDP']-data['diffGDP'].shift(1) #Result : Stationary
+    data['Second_diffYHI'] = data['diffYHI']-data['diffYHI'].shift(1) #Result : Stationary
 
 def second_diff_stationarity_test() :
     second_differencing()
@@ -94,32 +107,11 @@ def second_diff_stationarity_test() :
     stationarity(data['Second_diffGDP'].dropna(),"Second Differenced Yearly GDP Per Capita")
     stationarity(data['Second_diffYHI'].dropna(),"Second Differenced Net Yearly Household Income")
 
-second_diff_stationarity_test()
-
-from statsmodels.tsa.stattools import grangercausalitytests
-def granger_causality_matrix() :
-    test = 'ssr_chi2test'; maxlag=12; verbose=False 
-    variables = ["Average Housing Price","Second_diffMIR","Second_diffCPI","Second_diffGDP","Second_diffYHI"]
-    matrix = pd.DataFrame(np.zeros((len(variables), len(variables))), columns=variables, index=variables)
-    for c in matrix.columns :
-        for r in df.index :
-            test_result = grangercausalitytests(data[[r,c]],maxlag=maxlag,verbose=False)
-            p_values = [round(test_result[i+1][0][test][1],4) for i in range(maxlag)]
-            if verbose: print(f'Y = {r}, X = {c}, P Values = {p_values}')
-            min_p_value = np.min(p_values)
-            matrix.loc[r, c] = min_p_value
-    matrix.columns = [var + '_x' for var in variables]
-    matrix.index = [var + '_y' for var in variables]
-    return matrix
-
-granger_causality_matrix()
-
 def normalizeDataframe(dataFrame):
     df_num = dataFrame.select_dtypes(include=[np.number])
     df_norm = (df_num- df_num.min()) / (df_num.max() - df_num.min())
     dataFrame[df_norm.columns] = df_norm
     
-
 def crossValidationTimeSeries():
     # All info from here: https://medium.com/@soumyachess1496/cross-validation-in-time-series-566ae4981ce4
     
@@ -173,3 +165,7 @@ def crossValidationTimeSeries():
 
 #TODO : Both model's + baseline model Prediction Error(MSE) + Errorbar Function
 
+
+granger_causality_matrix()
+diff_stationarity_test()
+second_diff_stationarity_test()
