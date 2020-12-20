@@ -72,40 +72,33 @@ def stationarity(timeseries,name):
 
 #Check for stationarity for all features
 def stationarity_test() :
-    stationarity(data['Average Housing Price'],"Average Housing Price")   #Result : Stationary
-    stationarity(data['Mortgage Interest Rates'],"Mortgage Interest Rates") #Result : Non-stationary
-    stationarity(data['Consumer Price Index'],"Consumer Price Index") #Result : Non-stationary
-    stationarity(data['Yearly GDP Per Capita'],"Yearly GDP Per Capita") #Result: Non-stationary
-    stationarity(data['Net Yearly Household Income'],"Net Yearly Household Income") #Result : Non-stationary
+    stationarity(data['Average Housing Price'].dropna(),"Average Housing Price")   
+    stationarity(data['Mortgage Interest Rates'].dropna(),"Mortgage Interest Rates")
+    stationarity(data['Consumer Price Index'].dropna(),"Consumer Price Index") 
+    stationarity(data['Yearly GDP Per Capita'].dropna(),"Yearly GDP Per Capita") 
+    stationarity(data['Net Yearly Household Income'].dropna(),"Net Yearly Household Income") 
 
 #Differencing method on non-stationary data to convert them to stationary
 def differencing() :
-    data['diffMIR'] = data['Mortgage Interest Rates']-data['Mortgage Interest Rates'].shift(1)
-    data['diffCPI'] = data['Consumer Price Index'] - data['Consumer Price Index'].shift(1)
-    data['diffGDP'] = data['Yearly GDP Per Capita']-data['Yearly GDP Per Capita'].shift(1)
-    data['diffYHI'] = data['Net Yearly Household Income']-data['Net Yearly Household Income'].shift(1)
+    data['Average Housing Price'] = data['Average Housing Price'].diff()
+    data['Mortgage Interest Rates'] = data['Mortgage Interest Rates'].diff()
+    data['Consumer Price Index'] = data['Consumer Price Index'].diff()
+    data['Yearly GDP Per Capita'] = data['Yearly GDP Per Capita'].diff()
+    data['Net Yearly Household Income'] = data['Net Yearly Household Income'].diff()
 
-#Check for stationarity after differencing
-def diff_stationarity_test() :
-    differencing()
-    stationarity(data['diffMIR'].dropna(),"Differenced Mortgage Interest Rates")
-    stationarity(data['diffCPI'].dropna(),"Differenced Consumer Price Index")
-    stationarity(data['diffGDP'].dropna(),"Differenced Yearly GDP Per Capita") #Result after first differencing is data remains non-stationary
-    stationarity(data['diffYHI'].dropna(),"Differenced Net Yearly Household Income") #Result after first differencing is data remains non-stationary
-    
-#Second round of differencing
-def second_differencing() :
-    data['Second_diffMIR'] = data['diffMIR']-data['diffMIR'].shift(1) #Result : Stationary
-    data['Second_diffCPI'] = data['diffCPI']-data['diffCPI'].shift(1) #Result : Stationary
-    data['Second_diffGDP'] = data['diffGDP']-data['diffGDP'].shift(1) #Result : Stationary
-    data['Second_diffYHI'] = data['diffYHI']-data['diffYHI'].shift(1) #Result : Stationary
+#First stationarity test shows that :
+#Average Housing Price = stationary ; Mortgage Interest Rates = non-stationary ; Consumer Price Index = non-stationary ; Yearly GDP Per Capita = non-stationary ; Net Yearly Household Income = non-stationary
+stationarity_test()  
+differencing()
+#Second stationarity test shows that :
+#Average Housing Price = non-stationary ; Mortgage Interest Rates = stationary ; Consumer Price Index = stationary ; Yearly GDP Per Capita = non-stationary ; Net Yearly Household Income = non-stationary
+stationarity_test() 
+differencing()
+#Second stationarity test shows that :
+#Average Housing Price = stationary ; Mortgage Interest Rates = stationary ; Consumer Price Index = stationary ; Yearly GDP Per Capita = stationary ; Net Yearly Household Income = stationary
+stationarity_test()
 
-def second_diff_stationarity_test() :
-    second_differencing()
-    stationarity(data['Second_diffMIR'].dropna(),"Second Differenced Mortgage Interest Rates")
-    stationarity(data['Second_diffCPI'].dropna(),"Second Differenced Consumer Price Index")
-    stationarity(data['Second_diffGDP'].dropna(),"Second Differenced Yearly GDP Per Capita")
-    stationarity(data['Second_diffYHI'].dropna(),"Second Differenced Net Yearly Household Income")
+print(data.head())
 
 def normalizeDataframe(dataFrame):
     df_num = dataFrame.select_dtypes(include=[np.number])
@@ -152,10 +145,14 @@ def crossValidationTimeSeries():
     # Now train several models on each of these and average the accruacies for each model then pick the best one
 	pass
     
+#granger_causality_matrix()
+
 
 #TODO : Cross validation for Model 1 (VAR) to select alpha value
 
+
 #TODO : Cross validation for Model 2 (ARIMAX) to select weight value 
+
 
 #TODO : Model 1(VAR) Function
 
@@ -166,6 +163,3 @@ def crossValidationTimeSeries():
 #TODO : Both model's + baseline model Prediction Error(MSE) + Errorbar Function
 
 
-granger_causality_matrix()
-diff_stationarity_test()
-second_diff_stationarity_test()
