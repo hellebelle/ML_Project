@@ -29,7 +29,6 @@ def dataset_visualisation() :
         i += 1
     pyplot.show()
 
-
 #Standard in time-series to use variable depicting date-time information as index
 #Use 'data' from this point forward
 data = df.drop(['Month'],axis=1)
@@ -42,7 +41,7 @@ data.index = d
 # #3. Specify values for a whole year:
 #     data['2005']
 
-#TODO : Check for stationarity of multivariate time series (Statistical Test-Dickie Fuller) (Helen)
+#Check for stationarity of multivariate time series (Statistical Test-Dickie Fuller) (Helen)
 #https://www.analyticsvidhya.com/blog/2018/09/multivariate-time-series-guide-forecasting-modeling-python-codes/#:~:text=A%20Multivariate%20time%20series%20has,used%20for%20forecasting%20future%20values.&text=In%20this%20case%2C%20there%20are,considered%20to%20optimally%20predict%20temperature.
 #https://www.analyticsvidhya.com/blog/2018/09/non-stationary-time-series-python/
 
@@ -74,10 +73,13 @@ def differencing() :
 #Check for stationarity after differencing
 def diff_stationarity_test() :
     differencing()
-    stationarity(data['diffMIR'],"Differenced Mortgage Interest Rates")
-    stationarity(data['diffGDP'],"Differenced Yearly GDP Per Capita")
-    stationarity(data['diffYHI'],"Differenced Net Yearly Household Income")
-
+    stationarity(data['diffMIR'].dropna(),"Differenced Mortgage Interest Rates")
+    stationarity(data['diffCPI'].dropna(),"Differenced Consumer Price Index")
+    stationarity(data['diffGDP'].dropna(),"Differenced Yearly GDP Per Capita") #Result after first differencing is data remains non-stationary
+    stationarity(data['diffYHI'].dropna(),"Differenced Net Yearly Household Income") #Result after first differencing is data remains non-stationary
+    
+diff_stationarity_test()
+#Second round of differencing
 diff_stationarity_test()
 
 def normalizeDataframe(dataFrame):
