@@ -79,8 +79,22 @@ def diff_stationarity_test() :
     stationarity(data['diffYHI'].dropna(),"Differenced Net Yearly Household Income") #Result after first differencing is data remains non-stationary
     
 diff_stationarity_test()
+
 #Second round of differencing
-diff_stationarity_test()
+def second_differencing() :
+    data['Second_diffMIR'] = data['diffMIR']-data['diffMIR'].shift(1)
+    data['Second_diffCPI'] = data['diffCPI']-data['diffCPI'].shift(1)
+    data['Second_diffGDP'] = data['diffGDP']-data['diffGDP'].shift(1)
+    data['Second_diffYHI'] = data['diffYHI']-data['diffYHI'].shift(1)
+
+def second_diff_stationarity_test() :
+    second_differencing()
+    stationarity(data['Second_diffMIR'].dropna(),"Second Differenced Mortgage Interest Rates")
+    stationarity(data['Second_diffCPI'].dropna(),"Second Differenced Consumer Price Index")
+    stationarity(data['Second_diffGDP'].dropna(),"Second Differenced Yearly GDP Per Capita")
+    stationarity(data['Second_diffYHI'].dropna(),"Second Differenced Net Yearly Household Income")
+
+second_diff_stationarity_test()
 
 def normalizeDataframe(dataFrame):
     df_num = dataFrame.select_dtypes(include=[np.number])
