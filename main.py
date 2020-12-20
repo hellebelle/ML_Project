@@ -96,6 +96,24 @@ def second_diff_stationarity_test() :
 
 second_diff_stationarity_test()
 
+from statsmodels.tsa.stattools import grangercausalitytests
+def granger_causality_matrix() :
+    test = 'ssr_chi2test'; maxlag=12; verbose=False 
+    variables = ["Average Housing Price","Second_diffMIR","Second_diffCPI","Second_diffGDP","Second_diffYHI"]
+    matrix = pd.DataFrame(np.zeros((len(variables), len(variables))), columns=variables, index=variables)
+    for c in matrix.columns :
+        for r in df.index :
+            test_result = grangercausalitytests(data[[r,c]],maxlag=maxlag,verbose=False)
+            p_values = [round(test_result[i+1][0][test][1],4) for i in range(maxlag)]
+            if verbose: print(f'Y = {r}, X = {c}, P Values = {p_values}')
+            min_p_value = np.min(p_values)
+            matrix.loc[r, c] = min_p_value
+    matrix.columns = [var + '_x' for var in variables]
+    matrix.index = [var + '_y' for var in variables]
+    return matrix
+
+granger_causality_matrix()
+
 def normalizeDataframe(dataFrame):
     df_num = dataFrame.select_dtypes(include=[np.number])
     df_norm = (df_num- df_num.min()) / (df_num.max() - df_num.min())
