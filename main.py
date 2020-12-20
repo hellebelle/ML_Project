@@ -29,12 +29,12 @@ def dataset_visualisation() :
         i += 1
     pyplot.show()
 
+
 #Standard in time-series to use variable depicting date-time information as index
 df.iloc[:,0] = d
 #Use 'data' from this point forward
 data = df.drop([0],axis=1)
 data.index = df.iloc[:,0]
-
 # #Indexing techniques
 # #1. Specific the index as a string constant:
 #     data['2005-01']
@@ -166,13 +166,6 @@ def crossValidationTimeSeries():
     # Now train several models on each of these and average the accruacies for each model then pick the best one
 	pass
     
-    
-#TODO : Drop GDP and Consumer Price Index (or whichever we should after checking for stationarity) (Helen)
-
-#TODO : Normalise data (0 to 1) (Cian)
-
-#TODO : 5-fold cross-validation (Cian)
-#Refer to : https://medium.com/@soumyachess1496/cross-validation-in-time-series-566ae4981ce4
 
 #TODO : Cross validation for Model 1 (VAR) to select alpha value
 
