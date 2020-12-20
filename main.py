@@ -15,7 +15,6 @@ d= np.array([dt.datetime.strptime(date,"%Y%m%d").date() for date in dates],dtype
 
 #Check for stationarity of multivariate time series (Visual Test)
 #Visualise the trends in data
-#Specify columns to plot
 def dataset_visualisation() :
     groups=[1,2,3,4,5]
     groups_name = ["average_house_prices", "mortgage_interest_rate", "consumer_price_index", "yearly_GDP", "household_income"]
@@ -58,8 +57,6 @@ def granger_causality_matrix() :
     print(matrix.loc[['Average Housing Price_y']])
     
 #Check for stationarity of multivariate time series (Statistical Test-Dickie Fuller) (Helen)
-#https://www.analyticsvidhya.com/blog/2018/09/multivariate-time-series-guide-forecasting-modeling-python-codes/#:~:text=A%20Multivariate%20time%20series%20has,used%20for%20forecasting%20future%20values.&text=In%20this%20case%2C%20there%20are,considered%20to%20optimally%20predict%20temperature.
-#https://www.analyticsvidhya.com/blog/2018/09/non-stationary-time-series-python/
 from statsmodels.tsa.stattools import adfuller
 def stationarity(timeseries,name):
     #Perform Dickey-Fuller test:
@@ -98,7 +95,6 @@ differencing()
 #Average Housing Price = stationary ; Mortgage Interest Rates = stationary ; Consumer Price Index = stationary ; Yearly GDP Per Capita = stationary ; Net Yearly Household Income = stationary
 stationarity_test()
 
-print(data.head())
 
 def normalizeDataframe(dataFrame):
     df_num = dataFrame.select_dtypes(include=[np.number])
