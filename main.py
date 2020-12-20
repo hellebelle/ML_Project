@@ -60,13 +60,14 @@ def stationarity(timeseries,name):
 def stationarity_test() :
     stationarity(data['Average Housing Price'],"Average Housing Price")   #Result : Stationary
     stationarity(data['Mortgage Interest Rates'],"Mortgage Interest Rates") #Result : Non-stationary
-    stationarity(data['Consumer Price Index'],"Consumer Price Index") #Result : Stationary
+    stationarity(data['Consumer Price Index'],"Consumer Price Index") #Result : Non-stationary
     stationarity(data['Yearly GDP Per Capita'],"Yearly GDP Per Capita") #Result: Non-stationary
     stationarity(data['Net Yearly Household Income'],"Net Yearly Household Income") #Result : Non-stationary
 
 #Differencing method on non-stationary data to convert them to stationary
 def differencing() :
     data['diffMIR'] = data['Mortgage Interest Rates']-data['Mortgage Interest Rates'].shift(1)
+    data['diffCPI'] = data['Consumer Price Index'] - data['Consumer Price Index'].shift(1)
     data['diffGDP'] = data['Yearly GDP Per Capita']-data['Yearly GDP Per Capita'].shift(1)
     data['diffYHI'] = data['Net Yearly Household Income']-data['Net Yearly Household Income'].shift(1)
 
