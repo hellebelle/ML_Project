@@ -2,8 +2,10 @@ import pandas as pd
 import numpy as np 
 import matplotlib as pyplot
 from matplotlib import pyplot
+import matplotlib.pyplot as plt
 import datetime as dt
 from sklearn.preprocessing import Normalizer
+import statsmodels.api as sm
 
 #load dataset
 df = pd.read_csv("./dataset.csv",parse_dates=[0])
@@ -12,6 +14,8 @@ dates = np.array(dates) + '01' #Concatenate with fixed day for all dates
 
 #Convert the time in first column from type string to type date.
 d= np.array([dt.datetime.strptime(date,"%Y%m%d").date() for date in dates],dtype='datetime64')
+df.drop(['Month'],axis=1)
+df.index = d 
 
 #Check for stationarity of multivariate time series (Visual Test)
 #Visualise the trends in data
@@ -55,7 +59,9 @@ def granger_causality_matrix() :
     matrix.columns = [var + '_x' for var in variables]
     matrix.index = [var + '_y' for var in variables]
     print(matrix.loc[['Average Housing Price_y']])
-    
+
+#granger_causality_matrix()
+
 #Check for stationarity of multivariate time series (Statistical Test-Dickie Fuller) (Helen)
 from statsmodels.tsa.stattools import adfuller
 def stationarity(timeseries,name):
@@ -83,18 +89,17 @@ def differencing() :
     data['Yearly GDP Per Capita'] = data['Yearly GDP Per Capita'].diff()
     data['Net Yearly Household Income'] = data['Net Yearly Household Income'].diff()
 
-#First stationarity test shows that :
-#Average Housing Price = stationary ; Mortgage Interest Rates = non-stationary ; Consumer Price Index = non-stationary ; Yearly GDP Per Capita = non-stationary ; Net Yearly Household Income = non-stationary
-stationarity_test()  
-differencing()
-#Second stationarity test shows that :
-#Average Housing Price = non-stationary ; Mortgage Interest Rates = stationary ; Consumer Price Index = stationary ; Yearly GDP Per Capita = non-stationary ; Net Yearly Household Income = non-stationary
-stationarity_test() 
-differencing()
-#Second stationarity test shows that :
-#Average Housing Price = stationary ; Mortgage Interest Rates = stationary ; Consumer Price Index = stationary ; Yearly GDP Per Capita = stationary ; Net Yearly Household Income = stationary
-stationarity_test()
-
+# #First stationarity test shows that :
+# #Average Housing Price = stationary ; Mortgage Interest Rates = non-stationary ; Consumer Price Index = non-stationary ; Yearly GDP Per Capita = non-stationary ; Net Yearly Household Income = non-stationary
+# stationarity_test()  
+# differencing()
+# #Second stationarity test shows that :
+# #Average Housing Price = non-stationary ; Mortgage Interest Rates = stationary ; Consumer Price Index = stationary ; Yearly GDP Per Capita = non-stationary ; Net Yearly Household Income = non-stationary
+# stationarity_test() 
+# differencing()
+# #Second stationarity test shows that :
+# #Average Housing Price = stationary ; Mortgage Interest Rates = stationary ; Consumer Price Index = stationary ; Yearly GDP Per Capita = stationary ; Net Yearly Household Income = stationary
+# stationarity_test()
 
 def normalizeDataframe(dataFrame):
     df_num = dataFrame.select_dtypes(include=[np.number])
@@ -141,21 +146,65 @@ def crossValidationTimeSeries():
     # Now train several models on each of these and average the accruacies for each model then pick the best one
 	pass
     
-#granger_causality_matrix()
+
+#TODO : Cross validation for Model 1 (VAR) to select 
 
 
-#TODO : Cross validation for Model 1 (VAR) to select alpha value
+#Cross validation for Model 2 (ARIMAX) to select order of differencing(d), order of AR(p) and order of MA(q)
+from statsmodels.tsa.arima_model import ARIMA
+def build_arimax() :
+    #Use autocorrelation and partial autocorrelation plots to help us select a range for the p,d,q hyperparameters.
+    #First differencing
+    diff = df['Average Housing Price'].diff()
+    #To identify if the model requires any MA terms
+    sm.graphics.tsa.plot_acf(diff.dropna(), lags=80)
+    #To identify if the model requires any AR terms
+    sm.graphics.tsa.plot_pacf(diff.dropna(), lags=80)
+    #Second differencing
+    diff2 = diff.diff()
+    #To identify if the model requires any MA terms
+    sm.graphics.tsa.plot_acf(diff2.dropna(), lags=80)
+    #To identify if the model requires any AR terms
+    sm.graphics.tsa.plot_pacf(diff2.dropna(), lags=80)
+    #plt.show()
 
-
-#TODO : Cross validation for Model 2 (ARIMAX) to select weight value 
-
-
-#TODO : Model 1(VAR) Function
-
+    #Split data to test and training
+    Y = df['Average Housing Price']
+    X = df.drop(['Average Housing Price'],axis=1)
+    Ytrain = Y[:168] ; Ytest = Y[168:]
+    Xtrain = X[:168] ; Xtest = X[168:]
+    # #ARIMAX(1,1,1)
+    # model = ARIMA(endog=Ytrain,exog=Xtrain[['Mortgage Interest Rates','Consumer Price Index','Yearly GDP Per Capita','Net Yearly Household Income']],order=[1,1,1])
+    # fitted = model.fit()
+    # print(fitted.summary())
+    # #ARIMAX(1,1,13)
+    # model = ARIMA(endog=Ytrain,exog=Xtrain[['Mortgage Interest Rates','Consumer Price Index','Yearly GDP Per Capita','Net Yearly Household Income']],order=[1,1,13])
+    # fitted = model.fit()
+    # print(fitted.summary())
+    # #ARIMAX(1,2,1)
+    # model = ARIMA(endog=Ytrain,exog=Xtrain[['Mortgage Interest Rates','Consumer Price Index','Yearly GDP Per Capita','Net Yearly Household Income']],order=[1,2,1])
+    # fitted = model.fit()
+    # print(fitted.summary())
+    # #ARIMAX(2,1,1)
+    # model = ARIMA(endog=Ytrain,exog=Xtrain[['Mortgage Interest Rates','Consumer Price Index','Yearly GDP Per Capita','Net Yearly Household Income']],order=[2,1,1])
+    # fitted = model.fit()
+    # print(fitted.summary())
+    #ARIMAX(1,2,2)
+    model = ARIMA(endog=Ytrain,exog=Xtrain[['Mortgage Interest Rates','Consumer Price Index','Yearly GDP Per Capita','Net Yearly Household Income']],order=[1,2,2])
+    fitted = model.fit()
+    print(fitted.summary())
+    # #ARIMAX(2,2,1)
+    # model = ARIMA(endog=Ytrain,exog=Xtrain[['Mortgage Interest Rates','Consumer Price Index','Yearly GDP Per Capita','Net Yearly Household Income']],order=[2,2,1])
+    # fitted = model.fit()
+    # print(fitted.summary())
+                
     
-#TODO : Model 2(ARIMAX) Function
+                
+build_arimax()
 
 
 #TODO : Both model's + baseline model Prediction Error(MSE) + Errorbar Function
+def models_performance() :
+    #MAPE of all model 
 
 
