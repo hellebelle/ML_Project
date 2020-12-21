@@ -34,7 +34,7 @@ def dataset_visualisation() :
 
 def baseLineFunction(arr):
 	output = [0] * len(arr)
-	output[0] = test[0]
+	output[0] = arr[0]
 	for i in range(1,len(arr)):
 		output[i] = arr[i-1]
 	return output
@@ -209,8 +209,14 @@ def build_arimax() :
 build_arimax()
 
 
+
 #TODO : Both model's + baseline model Prediction Error(MSE) + Errorbar Function
-def models_performance() :
-    #MAPE of all model 
-
-
+def models_performance(arr1,arr2,lengthOfArrays = 12) :
+    # MAPE of all model
+    actualValues = df["Average Housing Price"][-lengthOfArrays:]
+    mabe1 = np.abs((actualValues - arr1))
+    mabe2 = np.abs((actualValues - arr2))
+    baseLinePredictions = baseLineFunction(actualValues)
+    baseLineError = np.abs((actualValues - baseLinePredictions))
+    
+    return baseLineError,mabe1, mabe2
