@@ -16,9 +16,9 @@ dates = np.array(dates) + '01' #Concatenate with fixed day for all dates
 #Convert the time in first column from type string to type date.
 d= np.array([dt.datetime.strptime(date,"%Y%m%d").date() for date in dates],dtype='datetime64')
 data = df.drop(['Month'],axis=1) # data = Used for VAR
-df.drop(['Month'],axis=1) # df = Used for ARIMAX
 df.index = d
 data.index = d 
+
 
 #Check for stationarity of multivariate time series (Visual Test)
 #Visualise the trends in data
@@ -63,26 +63,27 @@ def stationarity_test() :
     stationarity(data['Net Yearly Household Income'].dropna(),"Net Yearly Household Income") 
 
 #Differencing method on non-stationary data to convert them to stationary
-def differencing() :
+def differencing(data) :
     data['Average Housing Price'] = data['Average Housing Price'].diff()
     data['Mortgage Interest Rates'] = data['Mortgage Interest Rates'].diff()
     data['Consumer Price Index'] = data['Consumer Price Index'].diff()
     data['Yearly GDP Per Capita'] = data['Yearly GDP Per Capita'].diff()
     data['Net Yearly Household Income'] = data['Net Yearly Household Income'].diff()
+    return data
 
 #Making copy of train/test data
 train_orig = data[0:-12].copy()
 test_orig = data[-12:].copy()
 
-def stationarize():
+def stationarize(data):
     # #First stationarity test shows that :
     # #Average Housing Price = stationary ; Mortgage Interest Rates = non-stationary ; Consumer Price Index = non-stationary ; Yearly GDP Per Capita = non-stationary ; Net Yearly Household Income = non-stationary
     stationarity_test()  
-    differencing()
+    data = differencing(data)
     # #Second stationarity test shows that :
     # #Average Housing Price = non-stationary ; Mortgage Interest Rates = stationary ; Consumer Price Index = stationary ; Yearly GDP Per Capita = non-stationary ; Net Yearly Household Income = non-stationary
     stationarity_test() 
-    differencing()
+    data = differencing(data)
     # #Second stationarity test shows that :
     # #Average Housing Price = stationary ; Mortgage Interest Rates = stationary ; Consumer Price Index = stationary ; Yearly GDP Per Capita = stationary ; Net Yearly Household Income = stationary
 
@@ -108,8 +109,9 @@ def invert_transformation(df_forecast,second_diff=False):
     return df_fc
 
 #Model 1(VAR) Function
-def build_var(data):
-    stationarize()
+def build_var():
+    data = df.drop(['Month'],axis=1)
+    stationarize(data)
     #train-test split
     data = data.dropna()
     
@@ -128,8 +130,8 @@ def build_var(data):
     from statsmodels.stats.stattools import durbin_watson
     out = durbin_watson(model_fitted_VAR.resid)
 
-    for col, val in zip(data.columns, out):
-        print(col, ':', round(val, 2))
+    # for col, val in zip(data.columns, out):
+    #     print(col, ':', round(val, 2))
 
     #Forecasting
     # Get the lag order
@@ -143,10 +145,10 @@ def build_var(data):
     # forecast
     pred = model_fitted_VAR.forecast(y=forecast_input, steps=nobs)
     pred = (pd.DataFrame(pred, index=test.index, columns= data.columns + '_pred'))
-    
+   
     output = invert_transformation(pred, second_diff=True)
     print(output)
-    # print(output.loc[:, ['Average Housing Price_forecast']])
+    # print(output.loc[:, ['Average Housing Price_pred']])
 
     fig, axes = pyplot.subplots(nrows=int(len(data.columns)/2), ncols=2, dpi=150, figsize=(10,10))
     for i, (col,ax) in enumerate(zip(data.columns, axes.flatten())):
@@ -170,11 +172,9 @@ def build_var(data):
     print(results)
     return results
 
-forecast_VAR = build_var(data) #Forecast of Average Houseing Price for 12 months
+forecast_VAR = build_var() #Forecast of Average Houseing Price for 12 months
 
-#Cross validation for Model 2 (ARIMAX) to select order of differencing(d), order of AR(p) and order of MA(q)
-from statsmodels.tsa.arima_model import ARIMA
-def build_arimax() :
+def acf_pacf_plots() :
     #Use autocorrelation and partial autocorrelation plots to help us select a range for the p,d,q hyperparameters.
     #First differencing
     diff = df['Average Housing Price'].diff()
@@ -188,39 +188,82 @@ def build_arimax() :
     sm.graphics.tsa.plot_acf(diff2.dropna(), lags=80)
     #To identify if the model requires any AR terms
     sm.graphics.tsa.plot_pacf(diff2.dropna(), lags=80)
-    #plt.show()
+    plt.show()
 
+def get_orig_average_housing_price() :
+    mydata = df.drop(['Month'],axis=1)
+    orig_data_copy = mydata['Average Housing Price'][-13:]
+    orig_data_copy=orig_data_copy.loc['2018-12-01':'2019-11-01']
+    return orig_data_copy
+
+#Cross validation for Model 2 (ARIMAX) to select order of differencing(d), order of AR(p) and order of MA(q)
+from statsmodels.tsa.arima_model import ARIMA
+def build_arimax() :
+    mydata = df.drop(['Month'],axis=1)
+    orig_data_copy = df.drop(['Month'],axis=1)
+    #Difference data once
+    diffdata = differencing(mydata).dropna()
+    #ARMAX(1,2)
+    # model = ARIMA(endog=diffdata['Average Housing Price'],exog=diffdata[['Mortgage Interest Rates','Consumer Price Index','Yearly GDP Per Capita','Net Yearly Household Income']],order=[1,0,2])
+    # fitted = model.fit()
+    # print(fitted.summary())
+    #ARMAX(2,2)
+    # model = ARIMA(endog=df['Average Housing Price'],exog=df[['Mortgage Interest Rates','Consumer Price Index','Yearly GDP Per Capita','Net Yearly Household Income']],order=[2,0,2])
+    # fitted = model.fit()
+    # print(fitted.summary())
+
+    #Difference data second time
+    diff2data = differencing(diffdata).dropna()
+    #ARMAX(1,1)
+    # model = ARIMA(endog=diff2data['Average Housing Price'],exog=diff2data[['Mortgage Interest Rates','Consumer Price Index','Yearly GDP Per Capita','Net Yearly Household Income']],order=[1,0,1])
+    # fitted = model.fit()
+    # print(fitted.summary())
+    #ARMAX(1,2)
+    # model = ARIMA(endog=diff2data['Average Housing Price'],exog=diff2data[['Mortgage Interest Rates','Consumer Price Index','Yearly GDP Per Capita','Net Yearly Household Income']],order=[1,0,2])
+    # fitted = model.fit()
+    # print(fitted.summary())
+    
+    #Model chosen is ARMAX(1,2) differenced once
     #Split data to test and training
-    Y = df['Average Housing Price']
-    X = df.drop(['Average Housing Price'],axis=1)
-    Ytrain = Y[:168] ; Ytest = Y[168:]
-    Xtrain = X[:168] ; Xtest = X[168:]
-    # #ARIMAX(1,1,1)
-    # model = ARIMA(endog=Ytrain,exog=Xtrain[['Mortgage Interest Rates','Consumer Price Index','Yearly GDP Per Capita','Net Yearly Household Income']],order=[1,1,1])
-    # fitted = model.fit()
-    # print(fitted.summary())
-    # #ARIMAX(1,1,13)
-    # model = ARIMA(endog=Ytrain,exog=Xtrain[['Mortgage Interest Rates','Consumer Price Index','Yearly GDP Per Capita','Net Yearly Household Income']],order=[1,1,13])
-    # fitted = model.fit()
-    # print(fitted.summary())
-    # #ARIMAX(1,2,1)
-    # model = ARIMA(endog=Ytrain,exog=Xtrain[['Mortgage Interest Rates','Consumer Price Index','Yearly GDP Per Capita','Net Yearly Household Income']],order=[1,2,1])
-    # fitted = model.fit()
-    # print(fitted.summary())
-    # #ARIMAX(2,1,1)
-    # model = ARIMA(endog=Ytrain,exog=Xtrain[['Mortgage Interest Rates','Consumer Price Index','Yearly GDP Per Capita','Net Yearly Household Income']],order=[2,1,1])
-    # fitted = model.fit()
-    # print(fitted.summary())
-    #ARIMAX(1,2,2)
-    model = ARIMA(endog=Ytrain,exog=Xtrain[['Mortgage Interest Rates','Consumer Price Index','Yearly GDP Per Capita','Net Yearly Household Income']],order=[1,2,2])
+    Y = diffdata['Average Housing Price'].dropna()
+    X = diffdata.drop(['Average Housing Price'],axis=1)
+    X = X.dropna() 
+    Ytrain = Y[:-12] ; Ytest = Y[-12:]
+    Xtrain = X[:-12] ; Xtest = X[-12:]
+    
+    #ARMAX(1,2)
+    model = ARIMA(endog=Ytrain,exog=Xtrain[['Mortgage Interest Rates','Consumer Price Index','Yearly GDP Per Capita','Net Yearly Household Income']],order=[1,0,2])
     fitted = model.fit()
-    print(fitted.summary())
-    # #ARIMAX(2,2,1)
-    # model = ARIMA(endog=Ytrain,exog=Xtrain[['Mortgage Interest Rates','Consumer Price Index','Yearly GDP Per Capita','Net Yearly Household Income']],order=[2,2,1])
-    # fitted = model.fit()
-    # print(fitted.summary())
+    #print(fitted.summary())
+    
+    # Forecast 1 year
+    fc = fitted.predict(start='2019-01-01',end='2019-12-01',exog=Xtest[['Mortgage Interest Rates','Consumer Price Index','Yearly GDP Per Capita','Net Yearly Household Income']])  
+    
+    #Revert the forecast to before differencing
+    orig = get_orig_average_housing_price()
+    orig_array = orig.dropna().to_numpy()
+    fc_array = fc.dropna().to_numpy()
+    reverted_forecast = np.add(orig_array,fc_array)
+    # Make as pandas series
+    fc_series = pd.Series(reverted_forecast, index=Xtest.index)
+    print(fc_series)
+    #Original data split
+    Y_orig = orig_data_copy['Average Housing Price'].dropna()
+    X_orig = orig_data_copy.drop(['Average Housing Price'],axis=1)
+    X_orig = X_orig.dropna() 
+    Ytrain_orig = Y_orig[:-12] ; Ytest_orig = Y_orig[-12:]
+    Xtrain_orig = X[:-12] ; Xtest_orig = X_orig[-12:]
+
+    # Plot
+    plt.figure(figsize=(12,5), dpi=100)
+    plt.plot(Ytrain_orig, label='training')
+    plt.plot(Ytest_orig, label='actual')
+    plt.plot(fc_series, label='forecast')
+    plt.title('Forecast vs Actuals')
+    plt.legend(loc='upper left', fontsize=8)
+    plt.show()
                  
-#build_arimax()
+build_arimax()
 
 #TODO : Both model's + baseline model Prediction Error(MSE) + Errorbar Function
 def models_performance(arr1,arr2,lengthOfArrays = 12) :
