@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import datetime as dt
 from sklearn.preprocessing import Normalizer
 import statsmodels.api as sm
+from statsmodels.tsa.api import VAR
 
 #load dataset
 df = pd.read_csv("./dataset.csv",parse_dates=[0])
@@ -14,8 +15,10 @@ dates = np.array(dates) + '01' #Concatenate with fixed day for all dates
 
 #Convert the time in first column from type string to type date.
 d= np.array([dt.datetime.strptime(date,"%Y%m%d").date() for date in dates],dtype='datetime64')
-df.drop(['Month'],axis=1)
-df.index = d 
+data = df.drop(['Month'],axis=1) # data = Used for VAR
+df.drop(['Month'],axis=1) # df = Used for ARIMAX
+df.index = d
+data.index = d 
 
 #Check for stationarity of multivariate time series (Visual Test)
 #Visualise the trends in data
@@ -33,51 +36,23 @@ def dataset_visualisation() :
     pyplot.show()
 
 def baseLineFunction(arr):
-	output = [0] * len(arr)
-	output[0] = arr[0]
-	for i in range(1,len(arr)):
-		output[i] = arr[i-1]
-	return output
-#Standard in time-series to use variable depicting date-time information as index
-#Use 'data' from this point forward
-data = df.drop(['Month'],axis=1)
-data.index = d
-# #Indexing techniques
-# #1. Specific the index as a string constant:
-#     data['2005-01']
-# #2. Specify the entire range:
-#     data['2005-01':'2005-05']
-# #3. Specify values for a whole year:
-#     data['2005']
-
-from statsmodels.tsa.stattools import grangercausalitytests
-def granger_causality_matrix() :
-    test = 'ssr_chi2test'; maxlag=12; verbose=False 
-    variables = ["Average Housing Price","Mortgage Interest Rates","Consumer Price Index","Yearly GDP Per Capita","Net Yearly Household Income"]
-    matrix = pd.DataFrame(np.zeros((len(variables), len(variables))), columns=variables, index=variables)
-    for c in matrix.columns :
-        for r in matrix.index :
-            test_result = grangercausalitytests(data[[r,c]],maxlag=maxlag,verbose=False)
-            p_values = [round(test_result[i+1][0][test][1],4) for i in range(maxlag)]
-            if verbose: print(f'Y = {r}, X = {c}, P Values = {p_values}')
-            min_p_value = np.min(p_values)
-            matrix.loc[r, c] = min_p_value
-    matrix.columns = [var + '_x' for var in variables]
-    matrix.index = [var + '_y' for var in variables]
-    print(matrix.loc[['Average Housing Price_y']])
-
+    output = [0] * len(arr)
+    output[0] = arr[0]
+    for i in range(1,len(arr)):
+        output[i] = arr[i-1]
+    return output
 #granger_causality_matrix()
 
 #Check for stationarity of multivariate time series (Statistical Test-Dickie Fuller) (Helen)
 from statsmodels.tsa.stattools import adfuller
 def stationarity(timeseries,name):
     #Perform Dickey-Fuller test:
-    print('Results of Dickey-Fuller Test for :' + name)
+    #print('Results of Dickey-Fuller Test for :' + name)
     dftest = adfuller(timeseries, autolag='AIC')
     dfoutput = pd.Series(dftest[0:4], index=['Test Statistic','p-value','#Lags Used','Number of Observations Used'])
     for key,value in dftest[4].items():
         dfoutput['Critical Value (%s)'%key] = value
-    print(dfoutput)
+    #print(dfoutput)
 
 #Check for stationarity for all features
 def stationarity_test() :
@@ -95,66 +70,98 @@ def differencing() :
     data['Yearly GDP Per Capita'] = data['Yearly GDP Per Capita'].diff()
     data['Net Yearly Household Income'] = data['Net Yearly Household Income'].diff()
 
-# #First stationarity test shows that :
-# #Average Housing Price = stationary ; Mortgage Interest Rates = non-stationary ; Consumer Price Index = non-stationary ; Yearly GDP Per Capita = non-stationary ; Net Yearly Household Income = non-stationary
-# stationarity_test()  
-# differencing()
-# #Second stationarity test shows that :
-# #Average Housing Price = non-stationary ; Mortgage Interest Rates = stationary ; Consumer Price Index = stationary ; Yearly GDP Per Capita = non-stationary ; Net Yearly Household Income = non-stationary
-# stationarity_test() 
-# differencing()
-# #Second stationarity test shows that :
-# #Average Housing Price = stationary ; Mortgage Interest Rates = stationary ; Consumer Price Index = stationary ; Yearly GDP Per Capita = stationary ; Net Yearly Household Income = stationary
-# stationarity_test()
+#Making copy of train/test data
+train_orig = data[0:-12].copy()
+test_orig = data[-12:].copy()
+print(train_orig.head())
+print(test_orig.head())
 
-def normalizeDataframe(dataFrame):
-    df_num = dataFrame.select_dtypes(include=[np.number])
-    df_norm = (df_num- df_num.min()) / (df_num.max() - df_num.min())
-    dataFrame[df_norm.columns] = df_norm
-    
-def crossValidationTimeSeries():
-    # All info from here: https://medium.com/@soumyachess1496/cross-validation-in-time-series-566ae4981ce4
-    
-    ####### Method 1 #######
-    
-    # Start with small subset of the data
-    # Forecast for later data points and then check accuracy of the forecasted data points
-    # Use the same forecasted points as part of te next training dataset and forecast subsequent points again.
-    
-    # EXAMPLE: 5 observations  in cross validation set and want 4 fold cross validation
-    # Let dataset be [1,2,3,4,5]
-    # Need to create 4 pairs of training/test sets that follow these two rules
-    # 1. Every test set contains unique observations
-    # 2. Observations from training set occur before their corresponding test set
-    # We get the following pairs of training/test sets:
-    # Training: [1] Test: [2]
-    # Training: [1,2] Test: [3]
-    # Training: [1,2,3] Test: [4]
-    # Training: [1,2,3,4] Test: [5]
-    # Compute average of accuracies of the 4 test fold
-    
-    ######## Sample code for METHOD 1 ########
-    # import numpy as np
-    # from sklearn.model_selection import TimeSeriesSplit
-    # X = np.array([[1, 2], [3, 4], [1, 2], [3, 4], [1, 2], [3, 4]])
-    # y = np.array([1, 2, 3, 4, 5, 6])
-    # tscv = TimeSeriesSplit()
-    # print(tscv)
-    # TimeSeriesSplit(max_train_size=None, n_splits=3)
-    # for train_index, test_index in tscv.split(X):
-    # print(“TRAIN:”, train_index, “TEST:”, test_index) X_train, X_test = X[train_index], X[test_index]
-    # y_train, y_test = y[train_index], y[test_index]
-    
-    # This gives the following output:
-    # TRAIN: [0 1 2] TEST: [3]
-    # TRAIN: [0 1 2 3] TEST: [4]
-    # TRAIN: [0 1 2 3 4] TEST: [5]
-    # Now train several models on each of these and average the accruacies for each model then pick the best one
-	pass
-    
+def stationarize():
+    # #First stationarity test shows that :
+    # #Average Housing Price = stationary ; Mortgage Interest Rates = non-stationary ; Consumer Price Index = non-stationary ; Yearly GDP Per Capita = non-stationary ; Net Yearly Household Income = non-stationary
+    stationarity_test()  
+    differencing()
+    # #Second stationarity test shows that :
+    # #Average Housing Price = non-stationary ; Mortgage Interest Rates = stationary ; Consumer Price Index = stationary ; Yearly GDP Per Capita = non-stationary ; Net Yearly Household Income = non-stationary
+    stationarity_test() 
+    differencing()
+    # #Second stationarity test shows that :
+    # #Average Housing Price = stationary ; Mortgage Interest Rates = stationary ; Consumer Price Index = stationary ; Yearly GDP Per Capita = stationary ; Net Yearly Household Income = stationary
 
-#TODO : Cross validation for Model 1 (VAR) to select 
+#Cross validation for Model 1 (VAR) to select alpha value
+#The selected order(p) should be the order that gives the lowest ‘AIC’, ‘BIC’, ‘FPE’ and ‘HQIC’ scores.
+def cross_validation_VAR(train):
+    model_VAR = VAR(train)
+    x = model_VAR.select_order(maxlags=24)
+    # print(x.summary())
 
+
+# inverting transformation
+def invert_transformation(df_forecast,second_diff=False):
+    """Revert back the differencing to get the forecast to original scale."""
+    df_fc = df_forecast.copy()
+    columns = train_orig.columns
+    for col in columns:        
+        # Roll back 2nd Diff
+        if second_diff:
+            df_fc[str(col)+'_1d'] = (train_orig[col].iloc[-1]-train_orig[col].iloc[-2]) + df_fc[str(col)+'_pred'].cumsum()
+        # Roll back 1st Diff
+        df_fc[str(col)+'_forecast'] = train_orig[col].iloc[-1] + df_fc[str(col)+'_1d'].cumsum()
+    return df_fc
+
+#Model 1(VAR) Function
+def build_var(data):
+    stationarize()
+    #train-test split
+    data = data.dropna()
+    
+    nobs = 12
+    train, test = data[0:-nobs], data[-nobs:]
+
+    ##From cross validation determined that lag order of 24 is optimal value
+    # cross_validation_VAR(train)
+    
+    #Train the VAR Model of lag-order 24
+    model_VAR = VAR(train)
+    model_fitted_VAR = model_VAR.fit(24)
+    # print(model_fitted_VAR.summary())
+
+    #Check for Serial Correlation of Residuals (Errors) using Durbin Watson Statistic
+    from statsmodels.stats.stattools import durbin_watson
+    out = durbin_watson(model_fitted_VAR.resid)
+
+    # for col, val in zip(data.columns, out):
+    #     print(col, ':', round(val, 2))
+
+    #Forecasting
+    # Get the lag order
+    lag_order = model_fitted_VAR.k_ar
+    # print(lag_order)  #> should be 24
+
+    # Input data for forecasting
+    forecast_input = data.values[-lag_order:] #shape (24,5)
+    # print(forecast_input) #array of values to forecast
+
+    # forecast
+    pred = model_fitted_VAR.forecast(y=forecast_input, steps=nobs)
+    pred = (pd.DataFrame(pred, index=test.index, columns= data.columns + '_pred'))
+    
+    output = invert_transformation(pred, second_diff=True)
+    print(output)
+    # print(output.loc[:, ['Average Housing Price_pred']])
+
+    fig, axes = pyplot.subplots(nrows=int(len(data.columns)/2), ncols=2, dpi=150, figsize=(10,10))
+    for i, (col,ax) in enumerate(zip(data.columns, axes.flatten())):
+        output[col+'_forecast'].plot(legend=True, ax=ax).autoscale(axis='x',tight=True)
+        test_orig[col][-nobs:].plot(legend=True, ax=ax)
+        ax.set_title(col + ": Forecast vs Actuals")
+        ax.xaxis.set_ticks_position('none')
+        ax.yaxis.set_ticks_position('none')
+        ax.spines["top"].set_alpha(0)
+        ax.tick_params(labelsize=6)
+    pyplot.show()
+
+build_var(data)
 
 #Cross validation for Model 2 (ARIMAX) to select order of differencing(d), order of AR(p) and order of MA(q)
 from statsmodels.tsa.arima_model import ARIMA
@@ -203,12 +210,8 @@ def build_arimax() :
     # model = ARIMA(endog=Ytrain,exog=Xtrain[['Mortgage Interest Rates','Consumer Price Index','Yearly GDP Per Capita','Net Yearly Household Income']],order=[2,2,1])
     # fitted = model.fit()
     # print(fitted.summary())
-                
-    
-                
+                 
 build_arimax()
-
-
 
 #TODO : Both model's + baseline model Prediction Error(MSE) + Errorbar Function
 def models_performance(arr1,arr2,lengthOfArrays = 12) :
@@ -220,3 +223,4 @@ def models_performance(arr1,arr2,lengthOfArrays = 12) :
     baseLineError = np.abs((actualValues - baseLinePredictions))
     
     return baseLineError,mabe1, mabe2
+
