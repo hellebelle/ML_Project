@@ -73,8 +73,6 @@ def differencing() :
 #Making copy of train/test data
 train_orig = data[0:-12].copy()
 test_orig = data[-12:].copy()
-print(train_orig.head())
-print(test_orig.head())
 
 def stationarize():
     # #First stationarity test shows that :
@@ -130,8 +128,8 @@ def build_var(data):
     from statsmodels.stats.stattools import durbin_watson
     out = durbin_watson(model_fitted_VAR.resid)
 
-    # for col, val in zip(data.columns, out):
-    #     print(col, ':', round(val, 2))
+    for col, val in zip(data.columns, out):
+        print(col, ':', round(val, 2))
 
     #Forecasting
     # Get the lag order
@@ -148,7 +146,7 @@ def build_var(data):
     
     output = invert_transformation(pred, second_diff=True)
     print(output)
-    # print(output.loc[:, ['Average Housing Price_pred']])
+    # print(output.loc[:, ['Average Housing Price_forecast']])
 
     fig, axes = pyplot.subplots(nrows=int(len(data.columns)/2), ncols=2, dpi=150, figsize=(10,10))
     for i, (col,ax) in enumerate(zip(data.columns, axes.flatten())):
@@ -161,7 +159,18 @@ def build_var(data):
         ax.tick_params(labelsize=6)
     pyplot.show()
 
-build_var(data)
+    #Putting values into list for comparison
+    VAR_results = output.loc[:, ['Average Housing Price_forecast']]
+    new_indexes = np.arange(0, 12, 1).tolist()
+    print(new_indexes)
+    VAR_results.reindex(new_indexes)
+    results = []
+    for i in range(12):
+        results.append(VAR_results['Average Housing Price_forecast'][i])
+    print(results)
+    return results
+
+forecast_VAR = build_var(data) #Forecast of Average Houseing Price for 12 months
 
 #Cross validation for Model 2 (ARIMAX) to select order of differencing(d), order of AR(p) and order of MA(q)
 from statsmodels.tsa.arima_model import ARIMA
@@ -211,7 +220,7 @@ def build_arimax() :
     # fitted = model.fit()
     # print(fitted.summary())
                  
-build_arimax()
+#build_arimax()
 
 #TODO : Both model's + baseline model Prediction Error(MSE) + Errorbar Function
 def models_performance(arr1,arr2,lengthOfArrays = 12) :
