@@ -32,6 +32,12 @@ def dataset_visualisation() :
         i += 1
     pyplot.show()
 
+def baseLineFunction(arr):
+	output = [0] * len(arr)
+	output[0] = test[0]
+	for i in range(1,len(arr)):
+		output[i] = arr[i-1]
+	return output
 #Standard in time-series to use variable depicting date-time information as index
 #Use 'data' from this point forward
 data = df.drop(['Month'],axis=1)
