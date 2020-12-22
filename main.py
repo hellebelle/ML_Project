@@ -147,7 +147,7 @@ def build_var():
     pred = (pd.DataFrame(pred, index=test.index, columns= data.columns + '_pred'))
    
     output = invert_transformation(pred, second_diff=True)
-    print(output)
+    #print(output)
     # print(output.loc[:, ['Average Housing Price_pred']])
 
     fig, axes = pyplot.subplots(nrows=int(len(data.columns)/2), ncols=2, dpi=150, figsize=(10,10))
@@ -164,15 +164,14 @@ def build_var():
     #Putting values into list for comparison
     VAR_results = output.loc[:, ['Average Housing Price_forecast']]
     new_indexes = np.arange(0, 12, 1).tolist()
-    print(new_indexes)
+    #print(new_indexes)
     VAR_results.reindex(new_indexes)
     results = []
     for i in range(12):
         results.append(VAR_results['Average Housing Price_forecast'][i])
-    print(results)
     return results
 
-forecast_VAR = build_var() #Forecast of Average Houseing Price for 12 months
+#forecast_VAR = build_var() #Forecast of Average Houseing Price for 12 months
 
 def acf_pacf_plots() :
     #Use autocorrelation and partial autocorrelation plots to help us select a range for the p,d,q hyperparameters.
@@ -195,6 +194,7 @@ def get_orig_average_housing_price() :
     orig_data_copy = mydata['Average Housing Price'][-13:]
     orig_data_copy=orig_data_copy.loc['2018-12-01':'2019-11-01']
     return orig_data_copy
+
 
 #Cross validation for Model 2 (ARIMAX) to select order of differencing(d), order of AR(p) and order of MA(q)
 from statsmodels.tsa.arima_model import ARIMA
@@ -244,6 +244,7 @@ def build_arimax() :
     orig_array = orig.dropna().to_numpy()
     fc_array = fc.dropna().to_numpy()
     reverted_forecast = np.add(orig_array,fc_array)
+    
     # Make as pandas series
     fc_series = pd.Series(reverted_forecast, index=Xtest.index)
     print(fc_series)
@@ -263,16 +264,37 @@ def build_arimax() :
     plt.legend(loc='upper left', fontsize=8)
     plt.show()
                  
-build_arimax()
+#build_arimax()
+
 
 #TODO : Both model's + baseline model Prediction Error(MSE) + Errorbar Function
-def models_performance(arr1,arr2,lengthOfArrays = 12) :
-    # MAPE of all model
-    actualValues = df["Average Housing Price"][-lengthOfArrays:]
-    mabe1 = np.abs((actualValues - arr1))
-    mabe2 = np.abs((actualValues - arr2))
-    baseLinePredictions = baseLineFunction(actualValues)
-    baseLineError = np.abs((actualValues - baseLinePredictions))
+def models_performance() :
+    #ARMAX(1,2) difference once, 2019 forecast
+    armax_2019_forecast = [350539.469544,349833.276993,348936.624814,349514.272862,350229.258870,350806.047631,352611.341655,355056.869614,356719.716400,356877.208303,357138.917704,356269.253106]
+    var_2019_forecast = [343422.0991298727, 340697.6220058667, 333254.9377712622, 329790.39698992897, 328346.9156625471, 326476.87698399794, 324595.03370391915, 318650.8170065665, 312685.0149393934, 302573.5959096698, 294305.87427198637, 284774.72113972576]
     
-    return baseLineError,mabe1, mabe2
+    #Actual average housing price in 2019
+    actualValues = df["Average Housing Price"][-12:].to_numpy()
+    
+    #Calculate Mean Absolute Percentage Error(MAPE) as accuracy metrics to judge forecast
+    #ARMAX(1,2) difference once
+    mape_armax = np.mean(np.abs(armax_2019_forecast-actualValues)/np.abs(actualValues))
+    armax_accuracy = 1-mape_armax
+    #VAR
+    mape_var = np.mean(np.abs(var_2019_forecast-actualValues)/np.abs(actualValues))
+    var_accuracy = 1-mape_var
+    #Baseline model
+    baseLinePredictions = baseLineFunction(actualValues)
+    mape_baseline = np.mean(np.abs(baseLinePredictions-actualValues)/np.abs(actualValues))
+    baseline_accuracy = 1-mape_baseline
 
+    print("ARMAX model MAPE : " , mape_armax)
+    print("ARMAX forecast accuracy : " , armax_accuracy)
+    print("VAR model MAPE : " , mape_var)
+    print("VAR forecast accuracy : " , var_accuracy)
+    print("Baseline model MAPE : " , mape_baseline)
+    print("Baseline forecast accuracy : " , baseline_accuracy)
+
+    
+    
+models_performance()
