@@ -255,8 +255,8 @@ def build_arimax() :
     Xtrain_orig = X[:-12] ; Xtest_orig = X_orig[-12:]
 
     # Plot
-    plt.figure(figsize=(12,5), dpi=100)
-    plt.plot(Ytrain_orig, label='training')
+    plt.figure(figsize=(10,10), dpi=150)
+    #plt.plot(Ytrain_orig, label='training')
     plt.plot(Ytest_orig, label='actual')
     plt.plot(fc_series, label='forecast')
     plt.title('Forecast vs Actuals')
