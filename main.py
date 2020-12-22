@@ -189,6 +189,8 @@ def acf_pacf_plots() :
     sm.graphics.tsa.plot_acf(diff2.dropna(), lags=80)
     #To identify if the model requires any AR terms
     sm.graphics.tsa.plot_pacf(diff2.dropna(), lags=80)
+    plt.xlabel('Lags')
+    plt.ylabel('Autocorrelation Value')
     plt.show()
 
 def get_orig_average_housing_price() :
@@ -299,8 +301,8 @@ def models_performance() :
     plt.plot(var_2019_forecast, label='VAR')
     plt.plot(baseLinePredictions, label='Baseline', linestyle='dotted')
     plt.title('Models Forecast vs Actuals')
-    plt.xlabel('Time')
-    plt.ylabel('Average Housing Price')
+    plt.xlabel('Time (Months)')
+    plt.ylabel('Average Housing Price (€)')
     plt.xticks(np.arange(len(index)),index)
     plt.xticks(rotation=45)
     plt.legend(loc='lower left', fontsize=8)
@@ -315,4 +317,4 @@ def models_performance() :
 
     
     
-#models_performance()
+models_performance()
