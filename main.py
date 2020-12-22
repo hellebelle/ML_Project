@@ -53,7 +53,7 @@ def stationarity(timeseries,name):
     dfoutput = pd.Series(dftest[0:4], index=['Test Statistic','p-value','#Lags Used','Number of Observations Used'])
     for key,value in dftest[4].items():
         dfoutput['Critical Value (%s)'%key] = value
-    #print(dfoutput)
+    print(dfoutput)
 
 #Check for stationarity for all features
 def stationarity_test() :
@@ -71,6 +71,7 @@ def differencing(data) :
     data['Yearly GDP Per Capita'] = data['Yearly GDP Per Capita'].diff()
     data['Net Yearly Household Income'] = data['Net Yearly Household Income'].diff()
     return data
+
 
 #Making copy of train/test data
 train_orig = data[0:-12].copy()
@@ -199,7 +200,7 @@ def get_orig_average_housing_price() :
 
 #Cross validation for Model 2 (ARIMAX) to select order of differencing(d), order of AR(p) and order of MA(q)
 from statsmodels.tsa.arima_model import ARIMA
-def build_arimax() :
+def build_armax() :
     mydata = df.drop(['Month'],axis=1)
     orig_data_copy = df.drop(['Month'],axis=1)
     #Difference data once
@@ -265,7 +266,7 @@ def build_arimax() :
     plt.legend(loc='upper left', fontsize=8)
     plt.show()
                  
-#build_arimax()
+#build_armax()
 
 
 #Both model's + baseline model Mean Absolute Percentage Error(MAPE) 
@@ -314,4 +315,4 @@ def models_performance() :
 
     
     
-models_performance()
+#models_performance()
