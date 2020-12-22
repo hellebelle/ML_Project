@@ -1,3 +1,4 @@
+from numpy.core.fromnumeric import var
 import pandas as pd 
 import numpy as np 
 import matplotlib as pyplot
@@ -267,7 +268,7 @@ def build_arimax() :
 #build_arimax()
 
 
-#TODO : Both model's + baseline model Prediction Error(MSE) + Errorbar Function
+#Both model's + baseline model Mean Absolute Percentage Error(MAPE) 
 def models_performance() :
     #ARMAX(1,2) difference once, 2019 forecast
     armax_2019_forecast = [350539.469544,349833.276993,348936.624814,349514.272862,350229.258870,350806.047631,352611.341655,355056.869614,356719.716400,356877.208303,357138.917704,356269.253106]
@@ -285,8 +286,24 @@ def models_performance() :
     var_accuracy = 1-mape_var
     #Baseline model
     baseLinePredictions = baseLineFunction(actualValues)
+    print(baseLinePredictions)
     mape_baseline = np.mean(np.abs(baseLinePredictions-actualValues)/np.abs(actualValues))
     baseline_accuracy = 1-mape_baseline
+
+    index = ['Jan 19', "Feb 19", 'Mar 19','Apr 19', "May 19", 'Jun 19','Jul 19', "Aug 19", 'Sep 19','Oct 19', "Nov 19", 'Dec 19']
+    
+
+    plt.plot(actualValues, label='actual')
+    plt.plot(armax_2019_forecast, label='ARMAX')
+    plt.plot(var_2019_forecast, label='VAR')
+    plt.plot(baseLinePredictions, label='Baseline', linestyle='dotted')
+    plt.title('Models Forecast vs Actuals')
+    plt.xlabel('Time')
+    plt.ylabel('Average Housing Price')
+    plt.xticks(np.arange(len(index)),index)
+    plt.xticks(rotation=45)
+    plt.legend(loc='lower left', fontsize=8)
+    plt.show()
 
     print("ARMAX model MAPE : " , mape_armax)
     print("ARMAX forecast accuracy : " , armax_accuracy)
